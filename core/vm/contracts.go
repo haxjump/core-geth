@@ -22,7 +22,13 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"bytes"
+	"encoding/json"
 
+	"github.com/consensys/gnark-crypto/ecc"
+	"github.com/consensys/gnark/backend/groth16"
+	"github.com/consensys/gnark/backend/plonk"
+	"github.com/consensys/gnark/backend/witness"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -1080,3 +1086,87 @@ func kZGToVersionedHash(kzg kzg4844.Commitment) common.Hash {
 
 	return h
 }
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+type GnarkInputs struct {
+	CurveID   ecc.ID `json:"curve_id"`
+	Proof     []byte `json:"proof"`
+	VerifyKey []byte `json:"verify_key"`
+	Witness   []byte `json:"witness"`
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+type gnarkGroth16Verify struct{}
+
+func (b *gnarkGroth16Verify) RequiredGas(input []byte) uint64 {
+	return 7500
+}
+
+func (c *gnarkGroth16Verify) Run(input []byte) ([]byte, error) {
+	var gi GnarkInputs
+	err := json.Unmarshal(input, &gi)
+	if nil != err {
+		return nil, err
+	}
+
+	proof := groth16.NewProof(gi.CurveID)
+	proof.ReadFrom(bytes.NewReader(gi.Proof))
+
+	vk := groth16.NewVerifyingKey(gi.CurveID)
+	vk.ReadFrom(bytes.NewReader(gi.VerifyKey))
+
+	witness, err := witness.New(gi.CurveID.ScalarField())
+	if nil != err {
+		return nil, err
+	}
+	witness.ReadFrom(bytes.NewReader(gi.Witness))
+
+	err = groth16.Verify(proof, vk, witness)
+	if nil == err {
+		return []byte("y"), nil
+	} else {
+		return []byte("n"), nil
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+type gnarkPlonkVerify struct{}
+
+func (b *gnarkPlonkVerify) RequiredGas(input []byte) uint64 {
+	return 7500
+}
+
+func (c *gnarkPlonkVerify) Run(input []byte) ([]byte, error) {
+	var gi GnarkInputs
+	err := json.Unmarshal(input, &gi)
+	if nil != err {
+		return nil, err
+	}
+
+	proof := plonk.NewProof(gi.CurveID)
+	proof.ReadFrom(bytes.NewReader(gi.Proof))
+
+	vk := plonk.NewVerifyingKey(gi.CurveID)
+	vk.ReadFrom(bytes.NewReader(gi.VerifyKey))
+
+	witness, err := witness.New(gi.CurveID.ScalarField())
+	if nil != err {
+		return nil, err
+	}
+	witness.ReadFrom(bytes.NewReader(gi.Witness))
+
+	err = plonk.Verify(proof, vk, witness)
+	if nil == err {
+		return []byte("y"), nil
+	} else {
+		return []byte("n"), nil
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
