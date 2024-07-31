@@ -54,6 +54,9 @@ var basePrecompiledContracts = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{2}): &sha256hash{},
 	common.BytesToAddress([]byte{3}): &ripemd160hash{},
 	common.BytesToAddress([]byte{4}): &dataCopy{},
+
+	common.BytesToAddress([]byte{0xff, 0x00}): &gnarkGroth16Verify{},
+	common.BytesToAddress([]byte{0xff, 0x01}): &gnarkPlonkVerify{},
 }
 
 var PrecompiledContractsBLS = map[common.Address]PrecompiledContract{
@@ -66,6 +69,9 @@ var PrecompiledContractsBLS = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{16}): &bls12381Pairing{},
 	common.BytesToAddress([]byte{17}): &bls12381MapG1{},
 	common.BytesToAddress([]byte{18}): &bls12381MapG2{},
+
+	common.BytesToAddress([]byte{0xff, 0x00}): &gnarkGroth16Verify{},
+	common.BytesToAddress([]byte{0xff, 0x01}): &gnarkPlonkVerify{},
 }
 
 func mergeContracts(base, target map[common.Address]PrecompiledContract) {
