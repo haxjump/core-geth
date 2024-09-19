@@ -10,3 +10,6 @@
 	path = tests/testdata-etc
 	url = https://github.com/etclabscore/tests
 	shallow = true
+[submodule "examples/gnark_plonk/lib/forge-std"]
+	path = examples/gnark_plonk/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
